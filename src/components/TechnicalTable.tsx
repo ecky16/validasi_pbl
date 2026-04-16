@@ -1,12 +1,16 @@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Trash2 } from "lucide-react";
 import { FiberNode } from "@/src/types";
 
 interface TechnicalTableProps {
   data: FiberNode[];
+  isAdmin?: boolean;
+  onDelete?: (id: string) => void;
 }
 
-export function TechnicalTable({ data = [] }: TechnicalTableProps) {
+export function TechnicalTable({ data = [], isAdmin = false, onDelete }: TechnicalTableProps) {
   const safeData = data || [];
   return (
     <div className="rounded-md border bg-white overflow-hidden">
@@ -22,12 +26,13 @@ export function TechnicalTable({ data = [] }: TechnicalTableProps) {
             <TableHead className="font-semibold text-slate-700">ODP Name</TableHead>
             <TableHead className="font-semibold text-slate-700 text-center">Status</TableHead>
             <TableHead className="font-semibold text-slate-700">Technician</TableHead>
+            {isAdmin && <TableHead className="font-semibold text-slate-700 text-right">Actions</TableHead>}
           </TableRow>
         </TableHeader>
         <TableBody>
           {safeData.length === 0 ? (
             <TableRow>
-              <TableCell colSpan={9} className="text-center py-10 text-slate-500">
+              <TableCell colSpan={isAdmin ? 10 : 9} className="text-center py-10 text-slate-500">
                 No technical data found.
               </TableCell>
             </TableRow>
@@ -68,6 +73,18 @@ export function TechnicalTable({ data = [] }: TechnicalTableProps) {
                   <div className="text-slate-600 text-[10px] font-medium">{node.technician_name}</div>
                   <div className="text-[9px] text-slate-400">{node.lastValidatedAt}</div>
                 </TableCell>
+                {isAdmin && (
+                  <TableCell className="text-right">
+                    <Button 
+                      variant="ghost" 
+                      size="sm" 
+                      className="text-red-500 hover:text-red-600 hover:bg-red-50"
+                      onClick={() => onDelete?.(node.id)}
+                    >
+                      <Trash2 size={14} />
+                    </Button>
+                  </TableCell>
+                )}
               </TableRow>
             ))
           )}

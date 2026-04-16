@@ -405,6 +405,10 @@ export default function App() {
     try { await deleteDoc(doc(db, 'gpons', id)); } catch (err) { console.error(err); }
   };
 
+  const handleDeleteValidation = async (id: string) => {
+    try { await deleteDoc(doc(db, 'validations', id)); } catch (err) { console.error(err); }
+  };
+
   const handleAddUser = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newUsername || !newPassword) return;
@@ -455,6 +459,64 @@ export default function App() {
     (params: Connection) => setEdges((eds) => addEdge(params, eds)),
     []
   );
+
+  if (!isAuthReady) {
+    return (
+      <div className="flex h-screen items-center justify-center bg-[#f0f2f5]">
+        <div className="flex flex-col items-center text-slate-400">
+          <Activity size={48} className="mb-4 animate-pulse text-blue-500" />
+          <p className="text-sm font-medium">Loading FiberTrace...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!user && !customUser) {
+    return (
+      <div className="flex h-screen items-center justify-center bg-[#f0f2f5] p-4">
+        <Card className="w-full max-w-md shadow-2xl border-none">
+          <CardHeader className="text-center">
+            <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center text-blue-600 mx-auto mb-4">
+              <Lock size={24} />
+            </div>
+            <CardTitle className="text-2xl">FiberTrace Login</CardTitle>
+            <CardDescription>Enter your credentials to access the dashboard</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={handleCustomLogin} className="space-y-4">
+              {authError && (
+                <div className="p-3 bg-red-50 text-red-600 text-sm rounded-lg border border-red-100 text-center">
+                  {authError}
+                </div>
+              )}
+              <div className="space-y-2">
+                <label className="text-xs font-bold text-slate-500 uppercase">Username</label>
+                <Input 
+                  placeholder="Username" 
+                  value={loginUsername} 
+                  onChange={e => setLoginUsername(e.target.value)}
+                  className="h-11"
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-xs font-bold text-slate-500 uppercase">Password</label>
+                <Input 
+                  type="password" 
+                  placeholder="••••••••" 
+                  value={loginPassword} 
+                  onChange={e => setLoginPassword(e.target.value)}
+                  className="h-11"
+                />
+              </div>
+              <Button type="submit" className="w-full h-11 bg-blue-600 hover:bg-blue-700 text-base font-bold">
+                Sign In
+              </Button>
+            </form>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="flex h-screen bg-[#f0f2f5] font-sans text-[#1e293b]">
@@ -526,27 +588,17 @@ export default function App() {
                 />
               </div>
 
-              {!user && !customUser ? (
-                <Button 
-                  onClick={login} 
-                  size="sm" 
-                  className="bg-blue-600 hover:bg-blue-700 min-w-[100px]"
-                >
-                  Login to View Data
-                </Button>
-              ) : (
-                <div className="flex items-center gap-3">
-                  <div className="flex flex-col items-end">
-                    <span className="text-xs font-bold text-slate-700">{(user?.displayName || customUser?.username)}</span>
-                    <span className="text-[10px] text-slate-400 uppercase font-bold">
-                      {customUser?.role === 'admin' || user?.email === 'eckyrahmad769@gmail.com' ? 'Administrator' : 'Technician'}
-                    </span>
-                  </div>
-                  <Button onClick={() => { auth.signOut(); setCustomUser(null); }} variant="ghost" size="icon" className="text-slate-400 hover:text-red-500">
-                    <LogOut size={18} />
-                  </Button>
+              <div className="flex items-center gap-3">
+                <div className="flex flex-col items-end">
+                  <span className="text-xs font-bold text-slate-700">{(user?.displayName || customUser?.username)}</span>
+                  <span className="text-[10px] text-slate-400 uppercase font-bold">
+                    {customUser?.role === 'admin' || user?.email === 'eckyrahmad769@gmail.com' ? 'Administrator' : 'Technician'}
+                  </span>
                 </div>
-              )}
+                <Button onClick={() => { auth.signOut(); setCustomUser(null); }} variant="ghost" size="icon" className="text-slate-400 hover:text-red-500">
+                  <LogOut size={18} />
+                </Button>
+              </div>
 
               <div className="bot-status-pill">
                 <div className="w-2 h-2 rounded-full bg-[#10b981]" />
@@ -646,7 +698,7 @@ export default function App() {
             
             {/* Bottom List for Tracking Tab */}
             <div className="h-1/3 border-t border-slate-100 overflow-auto bg-white">
-              <TechnicalTable data={filteredData.slice(0, 5)} />
+              <TechnicalTable data={filteredData.slice(0, 5)} isAdmin={isAdmin} onDelete={handleDeleteValidation} />
             </div>
           </TabsContent>
 
@@ -675,9 +727,11 @@ export default function App() {
                   {(ftms || []).map(ftm => (
                     <div key={ftm.id} className="flex items-center justify-between p-3 bg-slate-50 rounded-lg border border-slate-100">
                       <span className="font-semibold text-slate-700">{ftm.name}</span>
-                      <Button variant="ghost" size="sm" className="text-red-500 hover:text-red-600 hover:bg-red-50" onClick={() => handleDeleteFtm(ftm.id)}>
-                        <Trash2 size={14} />
-                      </Button>
+                      {isAdmin && (
+                        <Button variant="ghost" size="sm" className="text-red-500 hover:text-red-600 hover:bg-red-50" onClick={() => handleDeleteFtm(ftm.id)}>
+                          <Trash2 size={14} />
+                        </Button>
+                      )}
                     </div>
                   ))}
                 </div>
@@ -725,9 +779,11 @@ export default function App() {
                           <span className="font-semibold text-slate-700">{gpon.name}</span>
                           <span className="ml-2 text-[10px] text-slate-400 uppercase tracking-tighter">CO: {ftm?.name || 'Unknown'}</span>
                         </div>
-                        <Button variant="ghost" size="sm" className="text-red-500 hover:text-red-600 hover:bg-red-50" onClick={() => handleDeleteGpon(gpon.id)}>
-                          <Trash2 size={14} />
-                        </Button>
+                        {isAdmin && (
+                          <Button variant="ghost" size="sm" className="text-red-500 hover:text-red-600 hover:bg-red-50" onClick={() => handleDeleteGpon(gpon.id)}>
+                            <Trash2 size={14} />
+                          </Button>
+                        )}
                       </div>
                     );
                   })}
@@ -736,7 +792,7 @@ export default function App() {
             </Card>
           </div>
           <div className="flex-1 overflow-auto">
-            <TechnicalTable data={filteredData} />
+            <TechnicalTable data={filteredData} isAdmin={isAdmin} onDelete={handleDeleteValidation} />
           </div>
         </TabsContent>
 
@@ -831,55 +887,6 @@ export default function App() {
           <div className="text-2xl font-bold text-[#10b981]">{successRate}%</div>
         </div>
       </div>
-
-      {/* Custom Login Modal */}
-      {showCustomLogin && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <Card className="w-full max-w-md shadow-2xl border-none">
-            <CardHeader className="text-center">
-              <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center text-blue-600 mx-auto mb-4">
-                <Lock size={24} />
-              </div>
-              <CardTitle className="text-2xl">FiberTrace Login</CardTitle>
-              <CardDescription>Enter your credentials to access the dashboard</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <form onSubmit={handleCustomLogin} className="space-y-4">
-                <div className="space-y-2">
-                  <label className="text-xs font-bold text-slate-500 uppercase">Username</label>
-                  <Input 
-                    placeholder="Username" 
-                    value={loginUsername} 
-                    onChange={e => setLoginUsername(e.target.value)}
-                    className="h-11"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <label className="text-xs font-bold text-slate-500 uppercase">Password</label>
-                  <Input 
-                    type="password" 
-                    placeholder="••••••••" 
-                    value={loginPassword} 
-                    onChange={e => setLoginPassword(e.target.value)}
-                    className="h-11"
-                  />
-                </div>
-                <Button type="submit" className="w-full h-11 bg-blue-600 hover:bg-blue-700 text-base font-bold">
-                  Sign In
-                </Button>
-                <Button 
-                  type="button" 
-                  variant="ghost" 
-                  className="w-full text-slate-400"
-                  onClick={() => setShowCustomLogin(false)}
-                >
-                  Cancel
-                </Button>
-              </form>
-            </CardContent>
-          </Card>
-        </div>
-      )}
     </main>
   </div>
 );
