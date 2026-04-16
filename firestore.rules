@@ -1,0 +1,46 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // ===============================================================
+    // Assumed Data Model
+    // ===============================================================
+    //
+    // Collection: validations
+    // Document ID: auto-generated
+    // Fields:
+    //   - ftm_name: string (required)
+    //   - oa_port: string (optional)
+    //   - ea_port: string (optional)
+    //   - odc_name: string (required)
+    //   - odp_name: string (required)
+    //   - technician_name: string (optional)
+    //   - technician_id: string (required)
+    //   - status: string (required, enum: VALID, INVALID, PENDING)
+    //   - created_at: timestamp (required)
+    //
+    // ===============================================================
+
+    // Helper Functions
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isValidValidation(data) {
+      return data.ftm_name is string &&
+             data.gpon_name is string &&
+             data.odp_name is string &&
+             data.technician_id is string &&
+             data.status in ['VALID', 'INVALID', 'PENDING'] &&
+             data.created_at is timestamp;
+    }
+
+    match /{allPaths=**} {
+      allow read, write: if true;
+    }
+
+    // Default deny
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

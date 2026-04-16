@@ -1,0 +1,6 @@
+{
+  "name": "Maincore FiberTrace",
+  "description": "End-to-end fiber network validation and tracking for field technicians with Telegram Bot integration.",
+  "requestFramePermissions": [],
+  "majorCapabilities": []
+}

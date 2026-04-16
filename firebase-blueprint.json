@@ -1,0 +1,63 @@
+{
+  "entities": {
+    "FTM": {
+      "title": "FTM",
+      "description": "Central Office / FTM Node",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" }
+      },
+      "required": ["name"]
+    },
+    "GPON": {
+      "title": "GPON",
+      "description": "GPON associated with an FTM",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "ftm_id": { "type": "string" }
+      },
+      "required": ["name", "ftm_id"]
+    },
+    "Validation": {
+      "title": "Validation",
+      "description": "Fiber network validation entry from a technician",
+      "type": "object",
+      "properties": {
+        "ftm_name": { "type": "string" },
+        "gpon_name": { "type": "string" },
+        "oa_rak": { "type": "string" },
+        "oa_panel": { "type": "string" },
+        "oa_port": { "type": "string" },
+        "ea_rak": { "type": "string" },
+        "ea_panel": { "type": "string" },
+        "ea_port": { "type": "string" },
+        "odc_name": { "type": "string" },
+        "odc_feeder_panel": { "type": "string" },
+        "odc_feeder_port": { "type": "string" },
+        "odc_dist_panel": { "type": "string" },
+        "odc_dist_port": { "type": "string" },
+        "odp_name": { "type": "string" },
+        "technician_name": { "type": "string" },
+        "technician_id": { "type": "string" },
+        "status": { "type": "string", "enum": ["VALID", "INVALID", "PENDING"] },
+        "created_at": { "type": "string", "format": "date-time" }
+      },
+      "required": ["ftm_name", "gpon_name", "odp_name", "technician_id", "status"]
+    }
+  },
+  "firestore": {
+    "/ftms/{ftmId}": {
+      "schema": "FTM",
+      "description": "List of FTMs"
+    },
+    "/gpons/{gponId}": {
+      "schema": "GPON",
+      "description": "List of GPONs"
+    },
+    "/validations/{validationId}": {
+      "schema": "Validation",
+      "description": "Collection of fiber validation logs"
+    }
+  }
+}
