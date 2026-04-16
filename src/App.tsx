@@ -124,7 +124,7 @@ export default function App() {
     }
 
     // Check registered users
-    const foundUser = appUsers.find(u => u.username === loginUsername && u.password === loginPassword);
+    const foundUser = (appUsers || []).find(u => u.username === loginUsername && u.password === loginPassword);
     if (foundUser) {
       setCustomUser(foundUser);
       setShowCustomLogin(false);
@@ -135,14 +135,14 @@ export default function App() {
 
   // Dynamic Nodes for Network Explorer
   useEffect(() => {
-    if (technicalData.length === 0) {
+    if (!technicalData || technicalData.length === 0) {
       setNodes([]);
       setEdges([]);
       return;
     }
 
     // Filter data based on search and selected filters
-    let filtered = technicalData;
+    let filtered = technicalData || [];
     if (selectedFtmFilter !== "ALL") {
       filtered = filtered.filter(d => d.ftm_name === selectedFtmFilter);
     }
@@ -161,7 +161,7 @@ export default function App() {
       );
     }
 
-    if (filtered.length === 0) {
+    if (!filtered || filtered.length === 0) {
       setNodes([]);
       setEdges([]);
       return;
@@ -288,9 +288,9 @@ export default function App() {
   }, [technicalData, selectedOdcFilter, selectedFtmFilter, selectedOdpFilter, searchQuery]);
 
   // Unique names for filters
-  const ftmList = Array.from(new Set(technicalData.map(d => d.ftm_name))).filter(Boolean).sort();
-  const odcList = Array.from(new Set(technicalData.map(d => d.odc_name))).filter(Boolean).sort();
-  const odpList = Array.from(new Set(technicalData.map(d => d.odp_name))).filter(Boolean).sort();
+  const ftmList = Array.from(new Set((technicalData || []).map(d => d.ftm_name))).filter(Boolean).sort();
+  const odcList = Array.from(new Set((technicalData || []).map(d => d.odc_name))).filter(Boolean).sort();
+  const odpList = Array.from(new Set((technicalData || []).map(d => d.odp_name))).filter(Boolean).sort();
 
   // Fetch initial data and subscribe to changes via Firebase
   useEffect(() => {
@@ -431,7 +431,7 @@ export default function App() {
   };
 
   // Advanced Filtering
-  const filteredData = technicalData.filter((item) => {
+  const filteredData = (technicalData || []).filter((item) => {
     const query = searchQuery.toUpperCase();
     const matchesSearch = (
       item.odp_name?.toUpperCase().includes(query) ||
@@ -447,9 +447,9 @@ export default function App() {
   });
 
   // Derived stats based on filtered data
-  const totalPorts = filteredData.length;
-  const pendingValidations = filteredData.filter(d => d.status === 'PENDING').length;
-  const successRate = totalPorts > 0 ? ((filteredData.filter(d => d.status === 'VALID').length / totalPorts) * 100).toFixed(1) : "0";
+  const totalPorts = (filteredData || []).length;
+  const pendingValidations = (filteredData || []).filter(d => d.status === 'PENDING').length;
+  const successRate = totalPorts > 0 ? (((filteredData || []).filter(d => d.status === 'VALID').length / totalPorts) * 100).toFixed(1) : "0";
 
   const onConnect = useCallback(
     (params: Connection) => setEdges((eds) => addEdge(params, eds)),
@@ -609,7 +609,7 @@ export default function App() {
               </div>
             </div>
             <div className="flex-1 relative">
-              {nodes.length === 0 ? (
+              {(!nodes || nodes.length === 0) ? (
                 <div className="absolute inset-0 flex flex-col items-center justify-center bg-slate-50/50 text-slate-400">
                   <Activity size={48} className="mb-4 opacity-20" />
                   <p className="text-sm font-medium">No network data available yet</p>
@@ -672,7 +672,7 @@ export default function App() {
                 </form>
                 {!isAdmin && <p className="text-[10px] text-amber-600 font-medium">Administrator access required</p>}
                 <div className="space-y-2 max-h-[200px] overflow-auto">
-                  {ftms.map(ftm => (
+                  {(ftms || []).map(ftm => (
                     <div key={ftm.id} className="flex items-center justify-between p-3 bg-slate-50 rounded-lg border border-slate-100">
                       <span className="font-semibold text-slate-700">{ftm.name}</span>
                       <Button variant="ghost" size="sm" className="text-red-500 hover:text-red-600 hover:bg-red-50" onClick={() => handleDeleteFtm(ftm.id)}>
@@ -699,7 +699,7 @@ export default function App() {
                     disabled={!isAdmin}
                   >
                     <option value="">Select FTM...</option>
-                    {ftms.map(ftm => (
+                    {(ftms || []).map(ftm => (
                       <option key={ftm.id} value={ftm.id}>{ftm.name}</option>
                     ))}
                   </select>
@@ -717,8 +717,8 @@ export default function App() {
                 </form>
                 {!isAdmin && <p className="text-[10px] text-amber-600 font-medium">Administrator access required</p>}
                 <div className="space-y-2 max-h-[200px] overflow-auto">
-                  {gpons.map(gpon => {
-                    const ftm = ftms.find(f => f.id === gpon.ftm_id);
+                  {(gpons || []).map(gpon => {
+                    const ftm = (ftms || []).find(f => f.id === gpon.ftm_id);
                     return (
                       <div key={gpon.id} className="flex items-center justify-between p-3 bg-slate-50 rounded-lg border border-slate-100">
                         <div>
@@ -757,11 +757,11 @@ export default function App() {
               </form>
               {!isAdmin && <p className="text-[10px] text-amber-600 font-medium">Administrator access required</p>}
               <div className="space-y-2">
-                {appUsers.map(u => (
+                {(appUsers || []).map(u => (
                   <div key={u.id} className="flex items-center justify-between p-4 bg-white border border-slate-100 rounded-xl shadow-sm">
                     <div className="flex items-center gap-3">
                       <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold">
-                        {u.username[0].toUpperCase()}
+                        {u.username?.[0]?.toUpperCase() || '?'}
                       </div>
                       <div>
                         <p className="font-bold text-slate-700">{u.username}</p>
@@ -795,7 +795,7 @@ export default function App() {
               </form>
               {!isAdmin && <p className="text-[10px] text-amber-600 font-medium">Administrator access required</p>}
               <div className="space-y-2">
-                {whitelist.map(w => (
+                {(whitelist || []).map(w => (
                   <div key={w.id} className="flex items-center justify-between p-4 bg-white border border-slate-100 rounded-xl shadow-sm">
                     <div className="flex items-center gap-3">
                       <div className="w-8 h-8 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-600 font-bold">

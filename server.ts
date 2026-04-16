@@ -22,7 +22,7 @@ if (fs.existsSync(configPath)) {
 // For Firebase Admin, we use the project ID and database ID from config
 // In a real production environment, you would also use a Service Account key
 // But in this environment, the Admin SDK can often use default credentials if available
-if (!admin.apps.length) {
+      if (!admin.apps || admin.apps.length === 0) {
   admin.initializeApp({
     projectId: process.env.VITE_FIREBASE_PROJECT_ID || firebaseAppletConfig.projectId,
     databaseURL: `https://${process.env.VITE_FIREBASE_PROJECT_ID || firebaseAppletConfig.projectId}.firebaseio.com`
@@ -43,7 +43,7 @@ const bot = new Telegraf(process.env.TELEGRAM_BOT_TOKEN || "PLACEHOLDER_TOKEN");
 const userSessions = new Map<number, { ftm?: string, gpon?: string, step: string }>();
 
 bot.start(async (ctx) => {
-  const userId = ctx.from.id.toString();
+  const userId = ctx.from?.id.toString() || "0";
   try {
     const whitelistSnapshot = await db.collection('whitelist')
       .where('telegram_id', '==', userId)
@@ -53,7 +53,7 @@ bot.start(async (ctx) => {
       return ctx.reply("Maaf, ID Telegram Anda belum terdaftar di Whitelist. Silakan hubungi Admin.");
     }
     
-    ctx.reply(`Halo ${ctx.from.first_name}! 🛠️\nSelamat datang di FiberTrace Bot.\n\nKetik 'validasi' untuk mulai input data teknis.`);
+    ctx.reply(`Halo ${ctx.from?.first_name || 'Technician'}! 🛠️\nSelamat datang di FiberTrace Bot.\n\nKetik 'validasi' untuk mulai input data teknis.`);
   } catch (err) {
     console.error(err);
     ctx.reply("Terjadi kesalahan saat mengecek whitelist.");
@@ -61,7 +61,7 @@ bot.start(async (ctx) => {
 });
 
 bot.hears(/validasi/i, async (ctx) => {
-  const userId = ctx.from.id.toString();
+  const userId = ctx.from?.id.toString() || "0";
   try {
     const whitelistSnapshot = await db.collection('whitelist')
       .where('telegram_id', '==', userId)
@@ -81,7 +81,7 @@ bot.hears(/validasi/i, async (ctx) => {
       return Markup.button.callback(data.name, `select_ftm:${data.name}`);
     });
 
-    userSessions.set(ctx.from.id, { step: 'selecting_ftm' });
+    userSessions.set(ctx.from?.id || 0, { step: 'selecting_ftm' });
     ctx.reply("Pilih FTM:", Markup.inlineKeyboard(buttons, { columns: 2 }));
   } catch (err) {
     console.error(err);
@@ -91,7 +91,7 @@ bot.hears(/validasi/i, async (ctx) => {
 
 bot.action(/select_ftm:(.+)/, async (ctx) => {
   const ftmName = ctx.match[1];
-  const userId = ctx.from.id;
+  const userId = ctx.from?.id || 0;
   
   try {
     const ftmsSnapshot = await db.collection('ftms')
@@ -126,7 +126,7 @@ bot.action(/select_ftm:(.+)/, async (ctx) => {
 
 bot.action(/select_gpon:(.+)/, async (ctx) => {
   const gponName = ctx.match[1];
-  const userId = ctx.from.id;
+  const userId = ctx.from?.id || 0;
   const session = userSessions.get(userId);
 
   if (!session || !session.ftm) return ctx.reply("Sesi kadaluarsa. Ketik 'validasi' lagi.");
@@ -137,7 +137,7 @@ bot.action(/select_gpon:(.+)/, async (ctx) => {
 });
 
 bot.hears(/selesai/i, (ctx) => {
-  const userId = ctx.from.id;
+  const userId = ctx.from?.id || 0;
   if (userSessions.has(userId)) {
     userSessions.delete(userId);
     ctx.reply("Sesi validasi ditutup. Terima kasih! Ketik 'validasi' untuk mulai baru.");
@@ -147,7 +147,7 @@ bot.hears(/selesai/i, (ctx) => {
 });
 
 bot.on("text", async (ctx) => {
-  const userId = ctx.from.id;
+  const userId = ctx.from?.id || 0;
   const session = userSessions.get(userId);
 
   if (!session || session.step !== 'waiting_data' || !session.ftm || !session.gpon) {
@@ -198,8 +198,8 @@ bot.on("text", async (ctx) => {
       odc_dist_panel: odcDist.panel,
       odc_dist_port: odcDist.port,
       odp_name: odpName,
-      technician_name: ctx.from.first_name.toUpperCase(),
-      technician_id: ctx.from.id.toString(),
+      technician_name: (ctx.from?.first_name || 'TECHNICIAN').toUpperCase(),
+      technician_id: ctx.from?.id.toString() || "0",
       status: 'VALID',
       created_at: admin.firestore.FieldValue.serverTimestamp()
     });

@@ -6,7 +6,8 @@ interface TechnicalTableProps {
   data: FiberNode[];
 }
 
-export function TechnicalTable({ data }: TechnicalTableProps) {
+export function TechnicalTable({ data = [] }: TechnicalTableProps) {
+  const safeData = data || [];
   return (
     <div className="rounded-md border bg-white overflow-hidden">
       <Table>
@@ -24,14 +25,14 @@ export function TechnicalTable({ data }: TechnicalTableProps) {
           </TableRow>
         </TableHeader>
         <TableBody>
-          {data.length === 0 ? (
+          {safeData.length === 0 ? (
             <TableRow>
               <TableCell colSpan={9} className="text-center py-10 text-slate-500">
                 No technical data found.
               </TableCell>
             </TableRow>
           ) : (
-            data.map((node) => (
+            safeData.map((node) => (
               <TableRow key={node.id} className="hover:bg-slate-50/50 transition-colors">
                 <TableCell>
                   <div className="font-medium text-slate-900">{node.ftm_name}</div>
