@@ -1,7 +1,11 @@
 import { initializeApp } from 'firebase/app';
 import { initializeFirestore } from 'firebase/firestore';
 import { getAuth } from 'firebase/auth';
-import firebaseAppletConfig from '../../firebase-applet-config.json';
+
+// Safely import the config file only if it exists (prevents Vercel build errors when gitignored)
+const configModules = import.meta.glob('../../firebase-applet-config.json', { eager: true });
+const configModule: any = configModules['../../firebase-applet-config.json'] || {};
+const firebaseAppletConfig = configModule.default || configModule;
 
 // Support both JSON file and Environment Variables (for Vercel/Production)
 const firebaseConfig = {
